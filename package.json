@@ -1,0 +1,7 @@
+{
+  "name": "ai-daily-feishu-vercel",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Daily AI industry briefing generated with OpenAI web search and pushed to Feishu via Vercel Cron"
+}
