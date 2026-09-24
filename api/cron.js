@@ -1,4 +1,5 @@
-const OPENAI_URL = "https://api.openai.com/v1/responses";
+const OPENAI_BASE_URL = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
+const OPENAI_URL = `${OPENAI_BASE_URL}/responses`;
 
 function requiredEnv(name) {
   const value = process.env[name];
