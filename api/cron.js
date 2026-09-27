@@ -71,7 +71,7 @@ function extractUrlCitations(response) {
   return [...map.values()];
 }
 
-function splitText(text, maxChars = 5500) {
+function cleanFeishuMarkdown(text) {\n  return String(text || "")\n    .replace(/\\\\([#*\\-])/g, "$1")\n    .replace(/\\n{3,}/g, "\\n\\n")\n    .trim();\n}\n\nfunction splitText(text, maxChars = 5500) {
   if (text.length <= maxChars) return [text];
 
   const blocks = text.split(/\n\n+/);
@@ -145,40 +145,7 @@ async function generateBrief() {
   const reasoningEffort = process.env.OPENAI_REASONING_EFFORT || "high";
   const now = beijingTimeLabel();
 
-  const prompt = `你是一名专业但非常实用的 AI 行业晨报编辑。现在是北京时间 ${now}。
-
-请使用 Web Search 检索“过去 24 小时”真正发生的 AI 行业重要动态，然后输出一份中文晨报。不要用旧闻凑数，不要把传闻写成事实，不要重复同一件事。
-
-重点关注：
-- OpenAI、Anthropic、Google / DeepMind、Meta、Microsoft、xAI、NVIDIA
-- 中国主要 AI 公司与模型的重要更新
-- 新模型、新产品、Agent、API、开发者工具、AI 编程、图像/视频/语音生成
-- 重大融资、并购、监管、版权、数据与算力变化
-- 对企业自动化、电商、内容生产、软件开发有实际影响的变化
-
-输出格式：
-# AI 行业晨报
-一句话总览：用 1-2 句告诉我今天最值得关注什么。
-
-## 今日最重要的 5-8 条
-每条使用：
-### 1. 标题
-**发生了什么：** 2-4 句，说明具体事实和时间。
-**为什么重要：** 1-3 句。
-**对实际工作的启示：** 1-3 句，优先写对 AI 自动化、电商、内容、研发效率的影响。
-
-## 值得继续观察
-列 2-4 个接下来几天值得跟踪的方向。
-
-## 今日结论
-用 3-5 句做非常具体的总结。
-
-要求：
-1. 只写有可靠来源支持的事实；有不确定性要明确说明。
-2. 优先一手来源、公司官方公告和高质量媒体。
-3. 如果过去 24 小时某类没有重大更新，直接写“无重大更新”，不要拿旧内容补位。
-4. 不要写空泛鸡汤，不要为了凑数量降低标准。
-5. 文字适合直接发到飞书群，清晰、紧凑、有信息密度。`;
+  const prompt = `现在是北京时间 ${now}。\n\n整理一份最新的 AI 行业消息和趋势晨报。优先覆盖过去 24 小时内真正重要的进展，包括大模型与产品发布、OpenAI/Google/Anthropic/Meta/xAI 等主要公司的动态、AI Agent 与自动化、模型能力与价格变化、开源模型、算力与芯片、企业应用、监管与政策、融资并购，以及对电商和业务自动化有实际影响的变化。按“发生了什么、为什么重要、值得关注的趋势、对实际工作的潜在影响”进行精炼总结，并区分重大变化与一般新闻。\n\n要求：\n- 以最近 24 小时为优先，不要为了凑数量写低价值旧闻。\n- 优先官方公告、开发者文档、公司博客及高质量媒体；重要消息尽量交叉验证。\n- 不要把传闻写成事实；明确区分已确认事实、试点、媒体报道和推测。\n- 输出中文，信息密度高，直接给晨报内容，不要写“我检索了哪些来源”“为什么只有几条”之类过程说明。\n- 结构自然，不强制固定 5-8 条；重大变化少时就少写，一般新闻可放到“其他值得关注”。\n- 对电商、AI 自动化、内容生产、软件开发有明确影响时，单独点出。\n- 适合直接发到飞书群，标题和小标题简洁。`;
 
   const resp = await fetch(OPENAI_URL, {
     method: "POST",
@@ -233,7 +200,7 @@ async function generateBrief() {
 
   return {
     model,
-    text: `${text}${sourceSection}`,
+    text: cleanFeishuMarkdown(`${text}${sourceSection}`),
     citations: citations.length
   };
 }
