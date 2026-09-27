@@ -71,7 +71,14 @@ function extractUrlCitations(response) {
   return [...map.values()];
 }
 
-function cleanFeishuMarkdown(text) {\n  return String(text || "")\n    .replace(/\\\\([#*\\-])/g, "$1")\n    .replace(/\\n{3,}/g, "\\n\\n")\n    .trim();\n}\n\nfunction splitText(text, maxChars = 5500) {
+function cleanFeishuMarkdown(text) {
+  return String(text || "")
+    .replace(/\\([#*\-])/g, "$1")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function splitText(text, maxChars = 5500) {
   if (text.length <= maxChars) return [text];
 
   const blocks = text.split(/\n\n+/);
