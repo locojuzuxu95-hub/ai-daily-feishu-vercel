@@ -1,5 +1,15 @@
-const OPENAI_BASE_URL = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
+function normalizeOpenAIBaseUrl(raw) {
+  let base = (raw || "https://api.openai.com/v1").trim().replace(/\/+$/, "");
+  // 兼容误把完整 Responses 地址填进 OPENAI_BASE_URL 的情况
+  base = base.replace(/\/responses$/i, "");
+  // UniAPI 的 OpenAI 兼容入口需要 /v1
+  if (base === "https://api.uniapi.io") base += "/v1";
+  return base;
+}
+
+const OPENAI_BASE_URL = normalizeOpenAIBaseUrl(process.env.OPENAI_BASE_URL);
 const OPENAI_URL = `${OPENAI_BASE_URL}/responses`;
+const IS_UNIAPI = /(^|\.)uniapi\.io$/i.test(new URL(OPENAI_BASE_URL).hostname);
 
 function requiredEnv(name) {
   const value = process.env[name];
@@ -179,12 +189,14 @@ async function generateBrief() {
     body: JSON.stringify({
       model,
       reasoning: { effort: reasoningEffort },
-      tools: [
-        {
-          type: "web_search",
-          search_context_size: "high"
-        }
-      ],
+      tools: IS_UNIAPI
+        ? [{ type: "web_search_preview" }]
+        : [
+            {
+              type: "web_search",
+              search_context_size: "high"
+            }
+          ],
       input: prompt,
       max_output_tokens: 6500,
       store: false
@@ -197,11 +209,15 @@ async function generateBrief() {
   try {
     data = JSON.parse(raw);
   } catch {
-    throw new Error(`OpenAI 返回非 JSON：${raw.slice(0, 500)}`);
+    throw new Error(
+      `AI API 返回非 JSON：${raw.slice(0, 500)}｜请求地址：${OPENAI_URL}`
+    );
   }
 
   if (!resp.ok) {
-    throw new Error(`OpenAI API 失败：HTTP ${resp.status} ${raw.slice(0, 800)}`);
+    throw new Error(
+      `AI API 失败：HTTP ${resp.status} ${raw.slice(0, 800)}｜请求地址：${OPENAI_URL}`
+    );
   }
 
   const text = extractOutputText(data);
